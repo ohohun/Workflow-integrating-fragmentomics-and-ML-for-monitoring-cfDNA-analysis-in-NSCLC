@@ -1,0 +1,13 @@
+reference_fa: "ref/hg38.fa"
+reference_dict: "ref/hg38.dict"
+bwa_index_dir: "ref/bwa"
+gc_wig: "ref/gc.wig.gz"
+map_wig: "ref/map.wig.gz"
+
+binsize_cna: 1000000
+threads_map: 16
+threads_sort: 16
+min_mapq: 30
+bwa_extra: "-M"
+normal: 0.95
+ploidy: [2]

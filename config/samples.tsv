@@ -1,0 +1,2 @@
+sample	type	R1	R2	library	lane	center
+case1	PE	data/case1_1.fq.gz	data/case1_2.fq.gz	LIB1	L001	CENTER1
