@@ -1,13 +1,32 @@
-reference_fa: "ref/hg38.fa"
-reference_dict: "ref/hg38.dict"
-bwa_index_dir: "ref/bwa"
-gc_wig: "ref/gc.wig.gz"
-map_wig: "ref/map.wig.gz"
+data_dir: "data"
+samplesheet: "samples.tsv"
 
-binsize_cna: 1000000
-threads_map: 16
-threads_sort: 16
-min_mapq: 30
-bwa_extra: "-M"
-normal: 0.95
-ploidy: [2]
+reference:
+  fasta: "/path/to/ref/GRCh38.fa"
+  bwa_index_prefix: "/path/to/ref/GRCh38"  # prefix ของ index bwa-mem2
+
+threads:
+  align: 8
+  markdup: 4
+  cov: 2
+  frag: 2
+  ichor: 4
+
+coverage_bins: 100000
+
+ichorcna:
+  do_run: true
+  ploidy: [2]
+  normal: [0.5, 0.7, 0.9]
+  maxCN: 5
+  gc_wig: "/path/to/gc.wig"
+  map_wig: "/path/to/map.wig"
+
+fragmentomics:
+  do_run: true
+  length_min: 100
+  length_max: 220
+
+labels:
+  cancer: "cancer"
+  healthy: "healthy"
