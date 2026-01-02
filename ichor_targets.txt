@@ -1,0 +1,3 @@
+results/cnv/EGAF00002727266.seg
+results/cnv/EGAF00002727274.seg
+results/cnv/EGAF00002727206.seg

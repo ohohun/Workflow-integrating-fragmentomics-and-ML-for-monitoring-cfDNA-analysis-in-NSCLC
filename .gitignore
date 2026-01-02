@@ -17,3 +17,14 @@ ref/*blacklist*.bed*
 *.log
 
 .DS_Store
+
+# --- big / HPC specific ---
+bin/
+ref/
+results/
+
+# logs & temp
+*.log
+*.out
+*.err
+tmp/

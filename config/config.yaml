@@ -1,9 +1,21 @@
-data_dir: "data"
-samplesheet: "samples.tsv"
+data_dir: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/data"
+samplesheet: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/Workflow-integrating-fragmentomics-and-ML-for-monitoring-cfDNA-analysis-in-NSCLC/config/samples.tsv"
 
 reference:
-  fasta: "/path/to/ref/GRCh38.fa"
-  bwa_index_prefix: "/path/to/ref/GRCh38"  # prefix ของ index bwa-mem2
+  fasta: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/ref/hg38/hg38.fa"
+  bwa_index_prefix: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/ref/hg38/GCA_000001405.15_GRCh38_no_alt_plus_hs38d1_analysis_set.fna"
+
+reference_fa: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/ref/hg38/hg38.fa"
+gc_wig: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/ref/hg38/hg38.gc.wig"
+map_wig: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/ref/hg38/hg38.map.wig"
+bwa_extra: ""
+
+threads_map: 8
+threads_sort: 8
+threads_markdup: 4
+threads_cov: 2
+threads_frag: 2
+threads_ichor: 4
 
 threads:
   align: 8
@@ -12,15 +24,15 @@ threads:
   frag: 2
   ichor: 4
 
-coverage_bins: 100000
+coverage_bins: 1000000
 
 ichorcna:
   do_run: true
   ploidy: [2]
   normal: [0.5, 0.7, 0.9]
   maxCN: 5
-  gc_wig: "/path/to/gc.wig"
-  map_wig: "/path/to/map.wig"
+  gc_wig: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/ref/hg38/hg38.gc.wig"
+  map_wig: "/lustre/fs0/storage/u812009/analysis/public_datasets/trypipeline/ref/hg38/hg38.map.wig"
 
 fragmentomics:
   do_run: true
@@ -30,3 +42,9 @@ fragmentomics:
 labels:
   cancer: "cancer"
   healthy: "healthy"
+
+binsize_cna: 1000000
+
+# --- required by Snakefile (top-level) ---
+ploidy: [2]
+normal: [0.5, 0.7, 0.9]

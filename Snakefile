@@ -42,9 +42,11 @@ rule trim_fastp:
 # 2) FastQC หลัง Trim (เช็ค R1 เป็นหลัก)
 rule fastqc:
     input:
-        r1="results/trim/{s}_R1.trimmed.fastq.gz"
+        r1 = "results/trim/{s}_R1.trimmed.fastq.gz"
     output:
-        "results/fastqc/{s}_R1_fastqc.html"
+        html = "results/fastqc/{s}_R1.trimmed_fastqc.html",
+        zip  = "results/fastqc/{s}_R1.trimmed_fastqc.zip"
+    threads: 2
     shell:
         r"""
         mkdir -p results/fastqc
@@ -103,51 +105,59 @@ rule index_bam:
         samtools index {input}
         """
 
-# 7) ichorCNA (CNV / tumor fraction)
+# 7) ichorCNA
+rule make_wig:
+    input:
+        bam="results/bam/{s}.markdup.bam"
+    output:
+        wig="results/cnv/{s}.wig"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p results/cnv
+        CHRS=$(bash -lc 'for i in $(seq 1 22); do printf "chr%s," "$i"; done; echo -n "chrX,chrY"')
+        readCounter -w 1000000 -q 20 --chromosome "$CHRS" {input.bam} > {output.wig}
+        """
+
 rule ichorcna:
     input:
-        bam="results/bam/{s}.markdup.bam",
-        bai="results/bam/{s}.markdup.bam.bai"
+        wig="results/cnv/{s}.wig",
+        gc="ref/hg38/gc_hg38_1000kb.wig",
+        map="ref/hg38/map_hg38_1000kb.wig"
     output:
         "results/cnv/{s}.seg"
     params:
-        ref=config["reference_fa"],
-        gc=config["gc_wig"],
-        mapwig=config["map_wig"],
-        binsize=config["binsize_cna"],
-        ploidy=",".join([str(x) for x in config["ploidy"]]),
-        normal=config["normal"],
         outdir="results/cnv"
     shell:
         r"""
+        set -euo pipefail
         mkdir -p {params.outdir}
-        Rscript -e 'library(ichorCNA);
-            ichorCNA(bamFile="{input.bam}",
-                     gcWig="{params.gc}",
-                     mapWig="{params.mapwig}",
-                     normal="{params.normal}",
-                     ploidy=c({params.ploidy}),
-                     refFasta="{params.ref}",
-                     outDir="{params.outdir}",
-                     id="{wildcards.s}",
-                     binsize={params.binsize},
-                     includeHOMD=FALSE,
-                     maxCN=5,
-                     chrTrain=c(paste0("chr",1:22),"chrX"),
-                     writeSegmentTable=TRUE)'
-        # เผื่อบางเวอร์ชันตั้งชื่อไฟล์ต่างไป: ย้ายให้ตรง output
+        Rscript --vanilla bin/runIchorCNA.R \
+          --id {wildcards.s} \
+          --WIG {input.wig} \
+          --gcWig {input.gc} \
+          --mapWig {input.map} \
+          --normal 'c(0.5,0.7,0.9)' \
+          --ploidy 'c(2)' \
+          --chrTrain 'c(paste0("chr",1:22),"chrX")' \
+          --genomeStyle UCSC \
+          --outDir {params.outdir}
         mv {params.outdir}/{wildcards.s}*.seg {output} 2>/dev/null || true
         """
+      
+
 
 # 8) MultiQC
+
 rule multiqc:
     input:
-        expand("results/fastqc/{s}_R1_fastqc.html", s=SAMPLES),
+        expand("results/fastqc/{s}_R1.trimmed_fastqc.html", s=SAMPLES),
         expand("results/trim/{s}_fastp.html", s=SAMPLES)
     output:
-        "results/reports/multiqc_report.html"
+        "results/multiqc/multiqc_report.html"
     shell:
-        r"""
-        mkdir -p results/reports
-        multiqc -o results/reports .
         """
+        mkdir -p results/multiqc
+        multiqc results -o results/multiqc
+        """
+
