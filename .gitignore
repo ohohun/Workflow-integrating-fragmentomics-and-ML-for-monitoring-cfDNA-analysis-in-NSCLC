@@ -1,30 +1,50 @@
-
-data/
-results/
-
-ref/*.fa
-ref/*.fai
-ref/*.dict
-ref/*.amb
-ref/*.ann
-ref/*.pac
-ref/*.bwt*
-ref/bwa/
-ref/*.wig*
-ref/*blacklist*.bed*
-
+# ---- Snakemake ----
 .snakemake/
-*.log
+*.snakemake.log
 
-.DS_Store
-
-# --- big / HPC specific ---
-bin/
-ref/
+# ---- Outputs / reports (มักใหญ่และ generate ได้) ----
 results/
+logs/
+benchmarks/
+multiqc_pgdx/
+fastp.html
+fastp.json
+multiqc_data/
+multiqc_report.html
 
-# logs & temp
-*.log
-*.out
-*.err
-tmp/
+# ---- Raw data / sequencing ----
+data/
+RawData/
+*.fastq
+*.fq
+*.fastq.gz
+*.fq.gz
+
+# ---- Alignment / genomics big files ----
+*.sam
+*.bam
+*.bai
+*.cram
+*.crai
+*.vcf
+*.vcf.gz
+*.tbi
+*.bed
+*.bed.gz
+*.wig
+*.bw
+*.bedGraph
+
+# ---- Reference genomes (มักใหญ่มาก) ----
+ref/hg38/
+
+# ---- Binary/tools (อย่า version tools ใน repo ถ้าเป็นไฟล์ใหญ่) ----
+bin/
+
+# ---- Python cache ----
+__pycache__/
+*.pyc
+
+# ---- OS/editor ----
+.DS_Store
+*.swp

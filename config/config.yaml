@@ -36,8 +36,41 @@ ichorcna:
 
 fragmentomics:
   do_run: true
+
+  bam_clean: "results/bam/{sample}.markdup.bam"
+  outdir: "results/fragmentomics"
+
+  fasta: "ref/hg38/hg38.fa"
+  fai: "ref/hg38/hg38.fa.fai"
+  twobit: "ref/hg38/hg38.2bit"
+
+  chrom_sizes: "ref/hg38/hg38.autosomes.chrom.sizes"
+  bins_100kb: "ref/hg38/hg38.autosomes.100kb.bed"
+  gap_bed: "ref/hg38/hg38.gap.bed"
+
+  # params
+  mapq: 30
+  workers: 8
+
   length_min: 100
   length_max: 220
+
+  fraglen:
+    min: 0
+    max: 500
+    bin_size: 1
+    short_fraction: 150
+
+  endmotif:
+    k: 4
+    min: 50
+    max: 500
+    both_strands: true
+
+  delfi:
+    window_size: 5000000
+    merge_bins: true
+    gc_correct: true
 
 labels:
   cancer: "cancer"

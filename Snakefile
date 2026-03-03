@@ -14,7 +14,8 @@ SAMPLES = df["sample"].tolist()
 rule all:
     input:
         expand("results/cnv/{s}.seg", s=SAMPLES),
-        "results/reports/multiqc_report.html"
+        "results/multiqc/multiqc_report.html",
+        "results/fragmentomics/fragmentomics_features.tsv"
 
 # 1) Trim adapters (fastp) —  .fastq or .fastq.gz
 rule trim_fastp:
@@ -27,6 +28,8 @@ rule trim_fastp:
         html="results/trim/{s}_fastp.html",
         json="results/trim/{s}_fastp.json"
     threads: 8
+    benchmark:
+        "benchmarks/trim_fastp/{s}.tsv"
     shell:
         r"""
         mkdir -p results/trim
@@ -39,21 +42,23 @@ rule trim_fastp:
         fi
         """
 
-# 2) FastQC หลัง Trim (เช็ค R1 เป็นหลัก)
+# 2) FastQC หลัง Trim
 rule fastqc:
     input:
-        r1 = "results/trim/{s}_R1.trimmed.fastq.gz"
+        r1="results/trim/{s}_R1.trimmed.fastq.gz"
     output:
-        html = "results/fastqc/{s}_R1.trimmed_fastqc.html",
-        zip  = "results/fastqc/{s}_R1.trimmed_fastqc.zip"
+        html="results/fastqc/{s}_R1.trimmed_fastqc.html",
+        zip="results/fastqc/{s}_R1.trimmed_fastqc.zip"
     threads: 2
+    benchmark:
+        "benchmarks/fastqc/{s}.tsv"
     shell:
         r"""
         mkdir -p results/fastqc
         fastqc {input.r1} -o results/fastqc
         """
 
-# 3) Mapping ด้วย bwa-mem2 → SAM
+# 3) Mapping ด้วย bwa-mem2
 rule map_bwa_mem2:
     input:
         r1="results/trim/{s}_R1.trimmed.fastq.gz",
@@ -65,6 +70,8 @@ rule map_bwa_mem2:
         ref=config["reference_fa"],
         extra=config.get("bwa_extra",""),
         rg=lambda w: "@RG\\tID:{s}\\tSM:{s}\\tLB:{s}\\tPL:ILLUMINA".format(s=w.s)
+    benchmark:
+        "benchmarks/map_bwa_mem2/{s}.tsv"
     shell:
         r"""
         mkdir -p results/bam
@@ -80,6 +87,8 @@ rule sort_bam:
     input: "results/bam/{s}.sam"
     output: temp("results/bam/{s}.sorted.bam")
     threads: config["threads_sort"]
+    benchmark:
+        "benchmarks/sort_bam/{s}.tsv"
     shell:
         r"""
         samtools sort -@ {threads} -O bam -o {output} {input}
@@ -91,6 +100,8 @@ rule mark_duplicates:
     output:
         bam="results/bam/{s}.markdup.bam",
         metrics="results/bam/{s}.dup_metrics.txt"
+    benchmark:
+        "benchmarks/mark_duplicates/{s}.tsv"
     shell:
         r"""
         picard MarkDuplicates I={input} O={output.bam} M={output.metrics} VALIDATION_STRINGENCY=SILENT
@@ -98,25 +109,33 @@ rule mark_duplicates:
 
 # 6) Index BAM
 rule index_bam:
-    input: "results/bam/{s}.markdup.bam"
-    output: "results/bam/{s}.markdup.bam.bai"
+    input:
+        bam="results/bam/{s}.markdup.bam"
+    output:
+        bai="results/bam/{s}.markdup.bam.bai"
+    threads: 4
+    benchmark:
+        "benchmarks/index_bam/{s}.tsv"
     shell:
         r"""
-        samtools index {input}
+        samtools index -@ {threads} -o {output.bai} {input.bam}
         """
 
 # 7) ichorCNA
 rule make_wig:
     input:
-        bam="results/bam/{s}.markdup.bam"
+        bam="results/bam/{s}.markdup.bam",
+        bai="results/bam/{s}.markdup.bam.bai"
     output:
-        wig="results/cnv/{s}.wig"
+        "results/cnv/{s}.wig"
+    benchmark:
+        "benchmarks/make_wig/{s}.tsv"
     shell:
         r"""
         set -euo pipefail
         mkdir -p results/cnv
         CHRS=$(bash -lc 'for i in $(seq 1 22); do printf "chr%s," "$i"; done; echo -n "chrX,chrY"')
-        readCounter -w 1000000 -q 20 --chromosome "$CHRS" {input.bam} > {output.wig}
+        readCounter -w 1000000 -q 20 --chromosome "$CHRS" {input.bam} > {output}
         """
 
 rule ichorcna:
@@ -128,6 +147,8 @@ rule ichorcna:
         "results/cnv/{s}.seg"
     params:
         outdir="results/cnv"
+    benchmark:
+        "benchmarks/ichorcna/{s}.tsv"
     shell:
         r"""
         set -euo pipefail
@@ -144,20 +165,37 @@ rule ichorcna:
           --outDir {params.outdir}
         mv {params.outdir}/{wildcards.s}*.seg {output} 2>/dev/null || true
         """
-      
-
 
 # 8) MultiQC
-
 rule multiqc:
     input:
         expand("results/fastqc/{s}_R1.trimmed_fastqc.html", s=SAMPLES),
         expand("results/trim/{s}_fastp.html", s=SAMPLES)
     output:
         "results/multiqc/multiqc_report.html"
+    benchmark:
+        "benchmarks/multiqc/multiqc.tsv"
     shell:
         """
         mkdir -p results/multiqc
         multiqc results -o results/multiqc
         """
 
+# ---- Merge fragmentomics features (MAKE THIS PRODUCE RULE ALL TARGET) ----
+FR = config["fragmentomics"]
+OUT = FR["outdir"]
+
+rule merge_fragmentomics_features:
+    input:
+        fraglen=expand(f"{OUT}" + "/{s}/fraglen/fraglen.tsv", s=SAMPLES),
+        endmotif=expand(f"{OUT}" + "/{s}/endmotif/endmotif_k4.tsv", s=SAMPLES),
+        delfi=expand(f"{OUT}" + "/{s}/delfi/delfi.tsv", s=SAMPLES)
+    output:
+        f"{OUT}/fragmentomics_features.tsv"
+    params:
+        samples=SAMPLES,
+        outdir=OUT
+    script:
+        "scripts/merge_fragmentomics_features.py"
+
+include: "rules/fragmentomics_finale.smk"
