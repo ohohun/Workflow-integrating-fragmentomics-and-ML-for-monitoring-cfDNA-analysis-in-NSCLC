@@ -78,6 +78,6 @@ labels:
 
 binsize_cna: 1000000
 
-# --- required by Snakefile (top-level) ---
+#required by Snakefile (top level)
 ploidy: [2]
 normal: [0.5, 0.7, 0.9]
