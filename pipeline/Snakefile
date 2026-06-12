@@ -17,7 +17,7 @@ rule all:
         "results/multiqc/multiqc_report.html",
         "results/fragmentomics/fragmentomics_features.tsv"
 
-# 1) Trim adapters (fastp) —  .fastq or .fastq.gz
+# 1)Trim adapters (fastp)
 rule trim_fastp:
     input:
         r1=lambda w: df.set_index("sample").loc[w.s, "R1"],
@@ -42,7 +42,7 @@ rule trim_fastp:
         fi
         """
 
-# 2) FastQC หลัง Trim
+# 2)FastQC after Trim
 rule fastqc:
     input:
         r1="results/trim/{s}_R1.trimmed.fastq.gz"
@@ -58,7 +58,7 @@ rule fastqc:
         fastqc {input.r1} -o results/fastqc
         """
 
-# 3) Mapping ด้วย bwa-mem2
+# 3)Mapping by bwa-mem2
 rule map_bwa_mem2:
     input:
         r1="results/trim/{s}_R1.trimmed.fastq.gz",
@@ -82,7 +82,7 @@ rule map_bwa_mem2:
         fi
         """
 
-# 4) Sort BAM
+# 4)Sort BAM
 rule sort_bam:
     input: "results/bam/{s}.sam"
     output: temp("results/bam/{s}.sorted.bam")
@@ -94,7 +94,7 @@ rule sort_bam:
         samtools sort -@ {threads} -O bam -o {output} {input}
         """
 
-# 5) Mark duplicates (Picard)
+# 5)Mark duplicates (Picard)
 rule mark_duplicates:
     input: "results/bam/{s}.sorted.bam"
     output:
@@ -107,7 +107,7 @@ rule mark_duplicates:
         picard MarkDuplicates I={input} O={output.bam} M={output.metrics} VALIDATION_STRINGENCY=SILENT
         """
 
-# 6) Index BAM
+# 6)Index BAM
 rule index_bam:
     input:
         bam="results/bam/{s}.markdup.bam"
@@ -121,7 +121,7 @@ rule index_bam:
         samtools index -@ {threads} -o {output.bai} {input.bam}
         """
 
-# 7) ichorCNA
+# 7)ichorCNA
 rule make_wig:
     input:
         bam="results/bam/{s}.markdup.bam",
@@ -166,7 +166,7 @@ rule ichorcna:
         mv {params.outdir}/{wildcards.s}*.seg {output} 2>/dev/null || true
         """
 
-# 8) MultiQC
+# 8)MultiQC
 rule multiqc:
     input:
         expand("results/fastqc/{s}_R1.trimmed_fastqc.html", s=SAMPLES),
@@ -181,7 +181,7 @@ rule multiqc:
         multiqc results -o results/multiqc
         """
 
-# ---- Merge fragmentomics features (MAKE THIS PRODUCE RULE ALL TARGET) ----
+# Merge fragmentomics features
 FR = config["fragmentomics"]
 OUT = FR["outdir"]
 
