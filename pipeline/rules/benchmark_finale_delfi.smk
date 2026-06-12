@@ -126,7 +126,7 @@ rule finale_delfi:
         chrom_sizes=FR["chrom_sizes"],
         twobit=FR["twobit"],
         bins=FR["bins_100kb"],
-        gap=FR["gap_bed"]          # ✅ เพิ่มบรรทัดนี้
+        gap=FR["gap_bed"]          
     output:
         tsv=os.path.join(OUT, "{sample}", "delfi", "delfi.tsv")
     params:
