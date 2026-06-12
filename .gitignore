@@ -1,8 +1,8 @@
-# ---- Snakemake ----
+# Snakemake
 .snakemake/
 *.snakemake.log
 
-# ---- Outputs / reports (มักใหญ่และ generate ได้) ----
+# Outputs reports
 results/
 logs/
 benchmarks/
@@ -12,7 +12,7 @@ fastp.json
 multiqc_data/
 multiqc_report.html
 
-# ---- Raw data / sequencing ----
+# Raw data sequencing
 data/
 RawData/
 *.fastq
@@ -20,7 +20,7 @@ RawData/
 *.fastq.gz
 *.fq.gz
 
-# ---- Alignment / genomics big files ----
+# Alignment
 *.sam
 *.bam
 *.bai
@@ -35,16 +35,16 @@ RawData/
 *.bw
 *.bedGraph
 
-# ---- Reference genomes (มักใหญ่มาก) ----
+# Reference genomes
 ref/hg38/
 
-# ---- Binary/tools (อย่า version tools ใน repo ถ้าเป็นไฟล์ใหญ่) ----
+# Binary tools
 bin/
 
-# ---- Python cache ----
+# Python cache
 __pycache__/
 *.pyc
 
-# ---- OS/editor ----
+# OS editor
 .DS_Store
 *.swp
