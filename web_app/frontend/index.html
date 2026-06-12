@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<!-- Version: v41.0 (Clinical Production - STABLE EXPORT ENGINE) -->
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>cfDNA Monitor | Production Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4f6;--panel:#ffffff;--panel-2:#f9fafb;--line:#e5e7eb;--line-dark:#94a3b8;--text:#111827;--muted:#4b5563;--sub:#6b7280;--blue:#2563eb;--blue-dark:#1e40af;--blue-light:#eff6ff;--green:#10b981;--red:#ef4444;--amber:#f59e0b;--orange:#f97316;--purple:#a855f7;--shadow:0 4px 6px -1px rgba(0,0,0,0.05),0 2px 4px -1px rgba(0,0,0,0.03);--radius:12px;--sidebar-w:280px;}
+*{box-sizing:border-box;outline:none;}
+html,body{height:100%; margin:0; font-family:'Inter','Sarabun',sans-serif; background:var(--bg); color:var(--text); line-height:1.5; -webkit-font-smoothing:antialiased; overflow:hidden;}
+h1,h2,h3,h4,h5{font-family:'Lexend',sans-serif;}
+button,input,select{font:inherit;}
+.hidden{display:none !important;}
+#appShell{display:flex; height:100vh; width:100%;}
+.sidebar{background:#0f172a; color:#fff; padding:32px 24px; display:flex; flex-direction:column; gap:32px; position:sticky; top:0; height:100vh; width:var(--sidebar-w); min-width:var(--sidebar-w); z-index:100; border-right:1px solid #1e293b;}
+.sidebar .brand{display:flex; align-items:center; gap:16px;}
+.sidebar .brand img{width:42px; filter: brightness(1.1);}
+.sidebar h1{font-size:19px; margin:0; font-weight:900; letter-spacing:-0.02em; line-height:1.1;}
+.sidebar p{font-size:10px; color:#64748b; margin:4px 0 0; font-weight:600; text-transform:uppercase; letter-spacing:0.08em;}
+.side-nav{display:flex; flex-direction:column; gap:4px; margin-top:20px;}
+.nav-item{padding:12px 16px; border-radius:10px; cursor:pointer; color:#94a3b8; font-weight:600; transition:0.2s; display:flex; align-items:center; gap:12px; font-size:14px;}
+.nav-item:hover{background:rgba(255,255,255,0.05); color:#fff;}
+.nav-item.active{background:var(--blue); color:#fff; box-shadow:0 4px 12px rgba(37,99,235,0.3);}
+.main{flex:1; display:flex; flex-direction:column; min-width:0; overflow-y:auto; padding-bottom:80px;}
+.topbar{height:64px; background:#fff; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; padding:0 40px; position:sticky; top:0; z-index:50;}
+.user-strip{display:flex; align-items:center; gap:10px; min-width:0;}
+.user-chip{display:inline-flex; align-items:center; gap:8px; padding:7px 12px; border-radius:999px; background:#f8fafc; border:1px solid var(--line); color:var(--muted); font-size:12px; font-weight:700; white-space:nowrap;}
+.role-badge{display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; border:1px solid transparent; font-size:12px; font-weight:900; letter-spacing:0.04em; text-transform:uppercase; white-space:nowrap;}
+.role-badge.admin{background:#ede9fe; color:#6d28d9; border-color:#ddd6fe;}
+.role-badge.analyst{background:#dbeafe; color:#1d4ed8; border-color:#bfdbfe;}
+.role-badge.viewer{background:#f1f5f9; color:#475569; border-color:#e2e8f0;}
+.content{padding:40px; max-width:1600px; margin:0 auto; width:100%; display:grid; gap:32px;}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; height:100%;}
+.card-header{padding:20px 24px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;}
+.card-title{margin:0; font-size:15px; font-weight:800; color:var(--text); text-transform:uppercase;}
+.card-body{padding:24px;}
+.kpi-grid{display:grid; grid-template-columns:repeat(6,1fr); gap:16px;}
+.kpi-card{padding:20px; background:#fff; border:1px solid var(--line); border-radius:12px;}
+.kpi-label{font-size:10px; font-weight:700; color:var(--sub); text-transform:uppercase; letter-spacing:0.05em;}
+.kpi-value{font-size:22px; font-weight:800; margin-top:8px; color:var(--text); font-family:'Lexend',sans-serif;}
+.table-wrap{overflow-x:auto;}
+.table{width:100%; border-collapse:collapse;}
+.table th{background:#f9fafb; padding:12px 16px; text-align:left; font-size:11px; font-weight:700; color:var(--sub); text-transform:uppercase; border-bottom:1px solid var(--line);}
+.table td{padding:14px 16px; border-bottom:1px solid var(--line); font-size:12.5px; vertical-align:middle;}
+.table tr:hover td{background:#f3f4f6;}
+.badge{padding:4px 10px; border-radius:6px; font-size:10px; font-weight:800; text-transform:uppercase; display:inline-flex; align-items:center; gap:5px; border:1px solid transparent;}
+.badge-pr{background:#dcfce7; color:#15803d; border-color:#bbf7d0;}
+.badge-sd{background:#fef3c7; color:#b45309; border-color:#fde68a;}
+.badge-pd{background:#fee2e2; color:#b91c1c; border-color:#fecaca;}
+.btn{padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:1px solid var(--line); background:#fff; color:var(--text); transition:0.2s; display:inline-flex; align-items:center; justify-content:center; gap:8px;}
+.btn:hover{background:#f9fafb;}
+.btn:disabled{opacity:0.5; cursor:not-allowed;}
+.btn.primary{background:var(--blue); color:#fff; border-color:var(--blue);}
+.btn.danger{background:#fee2e2; color:#b91c1c; border-color:#fecaca;}
+.chart-container{height:320px; width:100%; position:relative;}
+.chart-label{font-size:10px; fill:#475569; font-weight:700; font-family:'Inter',sans-serif;}
+.chart-axis{stroke:#334155; stroke-width:2;}
+.chart-grid{stroke:#94a3b8; stroke-width:1.0; stroke-opacity:0.12;}
+.chart-grid-dash{stroke:#64748b; stroke-width:1.0; stroke-dasharray:4 2; stroke-opacity:0.15;}
+.narrative-box{background:var(--blue-light); border-left:4px solid var(--blue); padding:20px 28px; border-radius:0 8px 8px 0; margin-bottom:32px; font-size:14.5px; color:#1e40af; line-height:1.7;}
+.interpret-box{padding:16px 20px; background:#f8fafc; border:1px solid var(--line); border-radius:10px; font-size:11.5px; color:var(--muted); margin-top:16px;}
+.visit-pill{padding:10px 16px; border-radius:30px; background:#fff; border:1px solid var(--line); cursor:pointer; font-size:11px; font-weight:700; color:var(--muted); transition:0.2s; display:flex; align-items:center; gap:6px; white-space:nowrap;}
+.visit-pill:hover{background:var(--panel-2);}
+.visit-pill.active{background:var(--blue); color:#fff; border-color:var(--blue); box-shadow:0 4px 10px rgba(37,99,235,0.2);}
+.modal-overlay{position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.8); display:grid; place-items:center; z-index:1000;}
+.modal{background:#fff; border-radius:24px; width:600px; max-width:90%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); overflow:hidden;}
+#loginScreen{min-height:100vh; display:grid; place-items:center; background:#0f172a; background-image: radial-gradient(circle at top right, #1e293b, #0f172a);}
+.login-card{width:520px; padding:72px; background:#fff; border-radius:32px; text-align:center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);}
+.font-mono{font-family:'JetBrains Mono', monospace;}
+.mag-bar-bg{height:8px; background:#f3f4f6; border-radius:4px; width:100px; overflow:hidden; display:inline-block; vertical-align:middle;}
+.mag-bar-fill{height:100%; background:var(--blue); border-radius:4px; transition:width 0.3s;}
+.th-desc{font-size:11.5px; color:#64748b; display:block; font-weight:400; margin-top:4px; font-family:'Sarabun',sans-serif;}
+.legend-item{display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; color:var(--muted);}
+.legend-dot{width:10px; height:10px; border-radius:50%;}
+.export-preview-list{max-height:200px; overflow-y:auto; background:#f1f5f9; padding:12px; border-radius:8px; font-family:'JetBrains Mono'; font-size:12px; border:1px solid var(--line);}
+button,.btn,.nav-item,.visit-pill,a.btn{pointer-events:auto; position:relative; z-index:3;}
+.admin-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+.notice{padding:12px 14px; border-radius:10px; font-size:13px; font-weight:700;}
+.notice.ok{background:#dcfce7; color:#15803d; border:1px solid #bbf7d0;}
+.notice.err{background:#fee2e2; color:#b91c1c; border:1px solid #fecaca;}
+.form-grid{display:grid; gap:10px;}
+.form-grid input,.form-grid select{width:100%; padding:11px 12px; border-radius:10px; border:1px solid var(--line); background:#fff;}
+@media(max-width:1000px){.admin-grid{grid-template-columns:1fr;}.topbar{padding:0 16px;}}
+</style>
+</head>
+<body>
+<div id="loginScreen" class="hidden">
+  <div class="login-card">
+    <img src="/Logo_cfDNA.png" width="120" style="margin-bottom:32px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));">
+    <h2 style="margin:0 0 8px; font-weight:900; font-size:32px; letter-spacing:-0.03em;">cfDNA Monitor</h2>
+    <p style="color:var(--blue); margin-bottom:48px; font-weight:800; font-size:16px; text-transform:uppercase; letter-spacing:0.05em;">NSCLC cfDNA Monitoring Platform</p>
+    <div style="display:grid; gap:20px; text-align:left;">
+      <label style="font-size:12px; font-weight:800; color:var(--sub); text-transform:uppercase; letter-spacing:0.05em;">Authorized Access Only</label>
+      <input id="username" type="text" placeholder="Username" value="admin" style="padding:18px; border-radius:16px; border:1px solid #e2e8f0; width:100%; font-size:16px;">
+      <input id="password" type="password" placeholder="Password" value="admin1234" style="padding:18px; border-radius:16px; border:1px solid #e2e8f0; width:100%; font-size:16px;">
+      <button onclick="doLogin()" class="btn primary" style="justify-content:center; padding:20px; font-size:17px; border-radius:16px; margin-top:10px; font-weight:700;">Sign In to System</button>
+    </div>
+    <p style="margin-top:40px; font-size:11px; color:#94a3b8; font-weight:600; text-transform:uppercase;">Non-Small Cell Lung Cancer (NSCLC) Registry</p>
+  </div>
+</div>
+<div id="appShell" class="hidden">
+  <aside class="sidebar">
+    <div class="brand"><img src="/Logo_cfDNA.png"><div><h1>cfDNA Monitor</h1><p>NSCLC cfDNA Monitoring</p></div></div>
+    <div class="side-nav">
+      <div id="btn_patients" class="nav-item active" onclick="switchPage('patients')"><span>Cohort Overview</span></div>
+      <div id="btn_analysis" class="nav-item" onclick="switchPage('analysis')"><span>Patient Analysis</span></div>
+      <div id="btn_reports" class="nav-item" onclick="switchPage('reports')"><span>Reports & Exports</span></div>
+      <div id="btn_admin" class="nav-item hidden" onclick="switchPage('admin')"><span>User Management</span></div>
+    </div>
+    <div style="margin-top:auto;"><div style="font-size:10px; color:#64748b; line-height:1.6; border-top:1px solid #1e293b; padding-top:20px;">RESEARCH USE ONLY.<br>NOT FOR DIAGNOSTIC USE.<br>© 2026 CLINICAL CORE</div></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div class="user-strip">
+        <span id="topUserChip" class="user-chip">User: —</span>
+        <span id="topRoleBadge" class="role-badge viewer">Role: —</span>
+      </div>
+      <button class="btn" onclick="logout()">Sign Out</button>
+    </header>
+    <div class="content">
+      <section id="patientsPage">
+        <div class="kpi-grid" id="statsGrid"></div>
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:24px; margin-top:32px;">
+          <div class="card"><div class="card-header"><div><h3 class="card-title">Tumor Fraction Distribution</h3></div></div><div class="card-body">
+            <div id="tfDistChart" class="chart-container"></div>
+            <div class="interpret-box">
+              การกระจายของค่า Tumor Fraction ในกลุ่มผู้ป่วย
+            </div>
+          </div></div>
+          <div class="card"><div class="card-header"><div><h3 class="card-title">Outcome & Treatment</h3></div></div><div class="card-body">
+            <div id="ctDistChart" style="display:flex; flex-direction:column; gap:16px; justify-content:center; padding:0 10px; border-bottom:1px solid var(--line); padding-bottom:24px; margin-bottom:24px;"></div>
+            <div id="txDistChart" style="display:flex; flex-direction:column; gap:12px; justify-content:center; padding:0 10px;"></div>
+          </div></div>
+        </div>
+        <div class="card" style="margin-top:32px;">
+          <div class="card-header">
+            <h3 class="card-title">Clinical Registry</h3>
+            <div style="display:flex; gap:12px; align-items:center;">
+              <input id="searchInput" placeholder="Search PID..." oninput="applySearch()" style="padding:10px 16px; border-radius:10px; border:1px solid var(--line); font-size:13px; width:200px;">
+              <input id="txSearch" placeholder="Filter Treatment..." oninput="applySearch()" style="padding:10px 16px; border-radius:10px; border:1px solid var(--line); font-size:13px; width:220px;">
+            </div>
+          </div>
+          <div class="table-wrap"><table class="table"><thead><tr id="regHead"></tr></thead><tbody id="patientTable"></tbody></table></div>
+        </div>
+      </section>
+
+      <section id="analysisPage" class="hidden">
+        <div id="analysisEmpty" class="card" style="padding:100px 40px; text-align:center;">
+          <h3 style="color:var(--sub); font-size:24px; font-weight:800;">Subject Not Selected</h3>
+          <p style="color:var(--muted); margin-bottom:32px;">Please select a patient from the cohort overview to begin deep molecular audit.</p>
+          <button onclick="switchPage('patients')" class="btn primary">Return to Registry</button>
+        </div>
+        <div id="analysisContent" class="hidden">
+          <div id="a_header_cards" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px;"></div>
+          <div class="narrative-box" id="a_narrative"></div>
+          <div class="card" style="margin-bottom:32px;">
+            <div class="card-header"><h3 class="card-title">Longitudinal Tumor Fraction Analysis</h3></div>
+            <div class="card-body">
+              <div id="tfTrendChart" class="chart-container" style="height:360px; margin-bottom:24px;"></div>
+              <div id="visitSelector" style="display:flex; gap:10px; margin-bottom:24px; overflow-x:auto; padding-bottom:8px;"></div>
+              <div id="selectedVisitPanel" class="card" style="background:var(--panel-2); border-style:dashed; margin-bottom:24px;">
+                <div class="card-header"><h4 class="card-title" id="v_title">Selected Visit Details</h4></div>
+                <div class="card-body"><div id="v_details_grid" class="kpi-grid" style="grid-template-columns:repeat(4,1fr); gap:12px;"></div></div>
+              </div>
+              <div class="table-wrap"><table class="table"><thead><tr id="tfTableHead"></tr></thead><tbody id="tfTableBody"></tbody></table></div>
+              <div class="interpret-box">
+                This trend reflects changes in circulating tumor DNA over time.<br>
+                An increase may indicate stronger tumor-related signals, while a decrease may suggest a reduction in tumor burden.<br><br>
+                แนวโน้มนี้สะท้อนการเปลี่ยนแปลงของ cfDNA จากเนื้องอกในกระแสเลือดตามช่วงเวลา  <br>
+                หากค่ามีแนวโน้มเพิ่มขึ้น อาจบ่งบอกถึงสัญญาณของเนื้องอกที่มากขึ้น  <br>
+                ในขณะที่ค่าที่ลดลงอาจสะท้อนถึงสัญญาณของเนื้องอกที่ลดลง
+              </div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">ML Treatment Response Assessment</h3></div>
+              <div class="card-body" id="mlAssessmentBody">
+                <div style="display:grid; grid-template-columns: 180px 1fr; gap:32px; align-items:center;">
+                  <div id="ml_pred_class" style="text-align:center; padding:24px; border-radius:12px; font-weight:900; font-size:32px; color:#fff; text-transform:uppercase; white-space:nowrap;"></div>
+                  <div>
+                    <div style="margin-bottom:16px;">
+                      <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--sub); margin-bottom:4px;">
+                        <span>P(PR)</span><span id="ml_p_pr_val"></span>
+                      </div>
+                      <div style="height:12px; background:#f1f5f9; border-radius:6px; overflow:hidden;">
+                        <div id="ml_p_pr_bar" style="height:100%; background:var(--blue); width:0%; transition: width 0.6s ease-out;"></div>
+                      </div>
+                    </div>
+                    <div>
+                      <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--sub); margin-bottom:4px;">
+                        <span>P(non-PR)</span><span id="ml_p_nonpr_val"></span>
+                      </div>
+                      <div style="height:12px; background:#f1f5f9; border-radius:6px; overflow:hidden;">
+                        <div id="ml_p_nonpr_bar" style="height:100%; background:var(--red); width:0%; transition: width 0.6s ease-out;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div id="ml_interpretation" class="interpret-box" style="margin-top:24px; background:var(--blue-light); border-left:4px solid var(--blue); color:#1e40af; line-height:1.6;"></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">ichorCNA Metrics</h3></div>
+              <div class="card-body">
+                <div id="ichorStats" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px;"></div>
+                <div class="table-wrap"><table class="table"><thead><tr id="cnvHead"></tr></thead><tbody id="cnvTableBody"></tbody></table></div>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px; margin-top:32px;">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">Fragmentomics Profile</h3></div>
+              <div class="card-body">
+                <div id="fragTrendChart" class="chart-container" style="height:260px;"></div>
+                <div style="display:flex; gap:16px; margin-top:10px;" id="fragLegend"></div>
+                <div class="interpret-box">
+                  This profile tracks short fragment fraction and short-to-long ratio across visits.<br>
+                  Changes in these patterns may reflect shifts in cfDNA fragmentation associated with tumor activity.<br><br>
+                  กราฟนี้แสดงการเปลี่ยนแปลงของสัดส่วนชิ้นส่วน DNA ขนาดสั้น และอัตราส่วนระหว่างชิ้นส่วนสั้นกับยาวในแต่ละช่วงเวลา  <br>
+                  ความเปลี่ยนแปลงของรูปแบบเหล่านี้อาจเกี่ยวข้องกับการเปลี่ยนแปลงของกิจกรรมของเนื้องอก
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">End-Motif Signatures (Top 12)</h3></div>
+              <div class="card-body">
+                <div id="motifFreqChart" class="chart-container" style="height:320px;"></div>
+                <div class="interpret-box">
+                  Displays the most frequent 4-base end motifs observed in cfDNA fragments.<br>
+                  These patterns provide insight into DNA fragmentation processes and may differ between biological conditions.<br><br>
+                  แสดงรูปแบบลำดับนิวคลีโอไทด์ 4 ตำแหน่ง (4-mer) ที่พบได้บ่อยบริเวณปลายของ cfDNA  <br>
+                  รูปแบบเหล่านี้ช่วยสะท้อนลักษณะของกระบวนการแตกตัวของ DNA และอาจแตกต่างกันในแต่ละสภาวะทางชีวภาพ
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr; margin-top:32px;">
+            <div class="card">
+              <div class="card-header"><h3 class="card-title">Fragment Length Distribution</h3></div>
+              <div class="card-body">
+                <div id="fragHistChart" class="chart-container" style="height:300px;"></div>
+              </div>
+            </div>
+          </div>
+          <div style="font-size:12px; color:var(--sub); text-align:center; padding:40px 0;">RESEARCH USE ONLY. NOT FOR DIAGNOSTIC USE. © 2026 CLINICAL CORE</div>
+        </div>
+      </section>
+
+
+      <section id="adminPage" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">User Management</h3>
+              <div style="font-size:12px;color:var(--muted);margin-top:4px;">Admin can create users, change role, reset password, enable/disable accounts, and review activity log.</div>
+            </div>
+            <button class="btn" onclick="loadUsers()">Refresh</button>
+          </div>
+          <div class="card-body" style="display:grid; gap:20px;">
+            <div id="adminNotice" class="notice ok hidden"></div>
+            <div class="admin-grid">
+              <div class="card" style="box-shadow:none;">
+                <div class="card-header"><h3 class="card-title">Create New User</h3></div>
+                <div class="card-body form-grid">
+                  <input id="newUsername" placeholder="username เช่น researcher01">
+                  <input id="newDisplay" placeholder="display name">
+                  <select id="newRole"><option value="viewer">viewer</option><option value="analyst">analyst</option><option value="admin">admin</option></select>
+                  <select id="newStatus"><option value="active">active</option><option value="disabled">disabled</option></select>
+                  <input id="newPassword" type="password" placeholder="password อย่างน้อย 8 ตัวอักษร">
+                  <button class="btn primary" onclick="createUser()">Create User</button>
+                </div>
+              </div>
+              <div class="card" style="box-shadow:none;">
+                <div class="card-header"><h3 class="card-title">Edit Selected User</h3></div>
+                <div class="card-body form-grid">
+                  <input id="editUsername" placeholder="select user from table" readonly>
+                  <input id="editDisplay" placeholder="display name">
+                  <select id="editRole"><option value="viewer">viewer</option><option value="analyst">analyst</option><option value="admin">admin</option></select>
+                  <select id="editStatus"><option value="active">active</option><option value="disabled">disabled</option></select>
+                  <input id="editPassword" type="password" placeholder="new password (optional)">
+                  <div style="display:flex; gap:10px;"><button class="btn primary" onclick="saveUserEdit()">Save Changes</button><button class="btn" onclick="clearUserForm()">Clear</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="card" style="box-shadow:none;">
+              <div class="card-header"><h3 class="card-title">Users</h3></div>
+              <div class="card-body"><div class="table-wrap"><table class="table"><thead><tr><th>Username</th><th>Display</th><th>Role</th><th>Status</th><th>Last Login</th><th style="text-align:right;">Actions</th></tr></thead><tbody id="adminUsersTable"></tbody></table></div></div>
+            </div>
+            <div class="card" style="box-shadow:none;">
+              <div class="card-header"><h3 class="card-title">Recent Activity</h3></div>
+              <div class="card-body"><div class="table-wrap"><table class="table"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th></tr></thead><tbody id="auditTable"></tbody></table></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="reportsPage" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <div><h3 class="card-title">Report Readiness Hub</h3><p id="selectionText" style="font-size:12px; color:var(--blue); font-weight:700; margin-top:4px;">0 patients selected</p></div>
+            <div style="display:flex; gap:12px;">
+              <button class="btn" id="btnExportSelected" onclick="exportSelectedAction()" disabled>Export Selected Patients</button>
+              <button class="btn primary" id="btnExportAll" onclick="previewExport(null, 'all')">Export All Cohort</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="missingDataAlert" style="margin-bottom:20px; padding:16px; background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; display:none;"><p id="missingDataText" style="margin:0; color:#b45309; font-size:13px; font-weight:600;"></p></div>
+            <div class="table-wrap"><table class="table"><thead><tr id="reportHubHead"></tr></thead><tbody id="reportHubTable"></tbody></table></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div id="exportModal" class="modal-overlay hidden"><div class="modal"><div class="card-header"><h3 class="card-title" id="exportModalTitle">Export Bundle Manifest</h3><button class="btn" style="border:0; font-size:20px;" onclick="$('exportModal').classList.add('hidden')">&times;</button></div><div class="card-body">
+  <div id="exportModalBody" style="display:grid; gap:16px;"></div>
+  <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;"><button class="btn" onclick="$('exportModal').classList.add('hidden')">Cancel</button><button id="exportConfirmBtn" class="btn primary">Confirm Export</button></div>
+</div></div></div>
+
+<div id="pdfModal" class="modal-overlay hidden"><div class="modal"><div class="card-header"><h3 class="card-title">CNA PDF Reports</h3><button class="btn" style="border:0; font-size:20px;" onclick="$('pdfModal').classList.add('hidden')">&times;</button></div><div class="card-body"><div class="table-wrap"><table class="table"><thead><tr id="pdfHead"></tr></thead><tbody id="pdfListTable"></tbody></table></div></div></div></div>
+
+<script>
+let state = { user: null, overview: { patients: [], stats: {} }, rows: [], selected: null, lang: 'en', filterMode: 'all', vIdx: 0, sortKey: 'sample', sortDir: 1, init: false, users: [] };
+const $ = id => document.getElementById(id);
+const num = (v, d=3) => (v !== null && v !== undefined && !isNaN(v)) ? Number(v).toFixed(d) : '—';
+const pct = v => (v !== null && v !== undefined && !isNaN(v)) ? (Number(v) * 100).toFixed(1) + '%' : '—';
+const badge = (txt, cls) => `<span class="badge badge-${cls}">${txt}</span>`;
+const ctBadge = ct => { const c = (ct||'').toLowerCase(); return badge(ct||'—', c==='pr'?'pr':c==='pd'?'pd':'sd'); };
+
+let selectedPids = new Set();
+
+const userRole = () => (state.user?.role || 'viewer').toLowerCase();
+const canExport = () => ['analyst', 'admin'].includes(userRole());
+const canBulkExport = () => userRole() === 'admin';
+const canDownloadPDF = () => ['analyst', 'admin'].includes(userRole());
+const canAdmin = () => userRole() === 'admin';
+
+function applyRoleUI() {
+  const role = userRole();
+  const display = state.user?.display || state.user?.username || '—';
+  const username = state.user?.username || '—';
+  if ($('topUserChip')) $('topUserChip').textContent = `User: ${display} (${username})`;
+  if ($('topRoleBadge')) { $('topRoleBadge').textContent = `Role: ${role}`; $('topRoleBadge').className = `role-badge ${role}`; }
+  if ($('btn_admin')) $('btn_admin').classList.toggle('hidden', !canAdmin());
+  if ($('btn_reports')) $('btn_reports').classList.toggle('hidden', !canExport());
+  if ($('btnExportAll')) $('btnExportAll').classList.toggle('hidden', !canBulkExport());
+  if ($('btnExportSelected')) $('btnExportSelected').classList.toggle('hidden', !canBulkExport());
+}
+
+async function api(u, o={}) { 
+  try { 
+    const r = await fetch(u, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...o }); 
+    if (!r.ok) {
+      if (r.status === 401) { $('loginScreen')?.classList.remove('hidden'); $('appShell')?.classList.add('hidden'); }
+      let detail = '';
+      try { const err = await r.json(); detail = err?.detail || ''; } catch (_) {}
+      return { __error: true, status: r.status, detail };
+    }
+    return await r.json(); 
+  } catch(e) { return { __error: true, detail: e.message }; } 
+}
+
+async function doLogin() { const me = await api('/api/login', { method: 'POST', body: JSON.stringify({ username: $('username').value, password: $('password').value }) }); if (me && !me.__error) boot(); else alert(me?.detail || 'Invalid Credentials'); }
+async function logout() { await api('/api/logout', { method: 'POST' }); location.reload(); }
+
+async function boot() {
+  const [me, ov] = await Promise.all([api('/api/me'), api('/api/overview')]);
+  if (!me || me.__error) { $('loginScreen').classList.remove('hidden'); return; }
+  state.user = me; state.overview = (ov && !ov.__error) ? ov : { patients: [], stats: {} };
+  applyRoleUI();
+  $('loginScreen').classList.add('hidden'); $('appShell').classList.remove('hidden');
+  switchPage('patients');
+  if (!state.init) { showPatient('2LB-001'); state.init = true; }
+}
+
+function setSort(k) { if(state.sortKey===k) state.sortDir*=-1; else { state.sortKey=k; state.sortDir=1; } translateUI(); applySearch(); }
+
+function translateUI() {
+  const h = [{k:'sample',l:'PID'},{k:'age',l:'AGE'},{k:'Gender',l:'SEX'},{k:'TreatmentGroup',l:'TREATMENT'},{k:'CT',l:'OUTCOME'},{k:'pfs_val',l:'PFS'},{k:'mean_tf',l:'MEAN TF'},{k:'cp_score',l:'VISIT RISK (CP)'},{k:'response_prob',l:'RESPONSE PROB'},{k:'n_timepoints',l:'VISITS'},{k:'has_pdf_count',l:'CNA'}];
+  $('regHead').innerHTML = h.map(i=>`<th onclick="setSort('${i.k}')" style="cursor:pointer; user-select:none; white-space:nowrap;">${i.l} ${state.sortKey===i.k?(state.sortDir===1?'↑':'↓'):''}</th>`).join('') + `<th style="text-align:right;">ACTION</th>`;
+  $('tfTableHead').innerHTML = `<th>Visit</th><th>Sample ID</th><th>TF (%)</th><th>% Δ Baseline</th><th>Ploidy</th><th>Status</th>`;
+  $('cnvHead').innerHTML = `<th>Sample</th><th>Visit</th><th>CNA(PDF)</th><th>Status</th>`;
+  const reportSelectHead = canBulkExport() ? `<th style="width:40px;"><input type="checkbox" id="selectAllReports" onclick="toggleAllReports(this.checked)"></th>` : '';
+  $('reportHubHead').innerHTML = `${reportSelectHead}<th>PID</th><th>Treatment</th><th>Visits</th><th>CNA PDFs</th><th>ML Status</th><th>Frag Status</th><th style="text-align:right;">Actions</th>`;
+  $('pdfHead').innerHTML = `<th>Visit</th><th>Sample ID</th><th>Action</th>`;
+}
+
+function switchPage(p) {
+  if (p === 'reports' && !canExport()) p = 'patients';
+  if (p === 'admin' && !canAdmin()) p = 'patients';
+  state.activePage = p; translateUI(); applyRoleUI();
+  ['patients', 'analysis', 'reports', 'admin'].forEach(k => { const el = $(k + 'Page'); if (el) el.classList.toggle('hidden', k !== p); const btn = $('btn_' + k); if (btn) btn.classList.toggle('active', k === p); });
+  if (p === 'patients') renderOverview();
+  if (p === 'reports') renderReportsHub();
+  if (p === 'admin') loadUsers();
+}
+
+function renderOverview() {
+  const d = state.overview; const s = d.stats || {};
+  $('statsGrid').innerHTML = [{k:'TOTAL PATIENTS',v:d.total_patients||0},{k:'TOTAL SAMPLES',v:d.total_samples||0},{k:'TOTAL MALE',v:s.male_count||0},{k:'TOTAL FEMALE',v:s.female_count||0},{k:'MEDIAN TF',v:num(s.median_tf,4)},{k:'MEAN RESPONSE',v:pct(s.mean_rp)}].map(i=>`<div class="kpi-card"><div class="kpi-label">${i.k}</div><div class="kpi-value">${i.v}</div></div>`).join('');
+  applySearch(); drawCohortCharts(s);
+}
+
+function applySearch() {
+  const q = $('searchInput').value.toLowerCase();
+  const tx = $('txSearch').value.toLowerCase();
+  let base = (state.overview.patients || []).filter(p => (p.sample||'').toLowerCase().includes(q) && ((p.TreatmentGroup||'').toLowerCase().includes(tx) || (p.Treatment||'').toLowerCase().includes(tx)));
+  const k = state.sortKey, d = state.sortDir;
+  base.sort((a,b) => {
+    let va = a[k], vb = b[k];
+    if(['cp_score','response_prob','mean_tf','pfs_val','n_timepoints','has_pdf_count','age'].includes(k)) { va=Number(va||0); vb=Number(vb||0); }
+    else { va=String(va||'').toLowerCase(); vb=String(vb||'').toLowerCase(); }
+    return va > vb ? d : (va < vb ? -d : 0);
+  });
+  state.filtered = base;
+  $('patientTable').innerHTML = state.filtered.map(p => `<tr><td style="font-weight:800; color:var(--blue);">${p.sample}</td><td>${p.age||'—'}</td><td>${p.Gender||'—'}</td><td>${p.TreatmentGroup||'—'}</td><td>${ctBadge(p.CT)}</td><td class="font-mono">${num(p.pfs_val, 0)}</td><td class="font-mono" style="font-weight:700;">${num(p.mean_tf, 4)}</td><td class="font-mono">${num(p.cp_score,3)}</td><td class="font-mono" style="color:var(--blue); font-weight:700;">${pct(p.response_prob)}</td><td>${p.n_timepoints}</td><td>${p.has_pdf_count>0?badge(p.has_pdf_count,'gray'):'—'}</td><td style="text-align:right;"><button class="btn" onclick="showPatient('${p.sample}')">Analysis</button></td></tr>`).join('');
+}
+
+async function showPatient(pid) {
+  if (!pid) return; const rows = await api(`/api/patient/${pid}`); if (!rows || rows.length === 0) return;
+  state.selected = pid; state.rows = rows.sort((a,b)=>a.timepoint - b.timepoint);
+  if (state.activePage !== 'analysis' && state.init) switchPage('analysis');
+  $('analysisEmpty').classList.add('hidden'); $('analysisContent').classList.remove('hidden');
+  const m = (state.overview.patients || []).find(x=>x.sample===pid) || state.rows[0];
+  const ml_pred = `<span style="color:${m.pred==='PR'?'var(--green)':'var(--red)'}; font-weight:800;">${m.pred||'—'}</span>`;
+  const pfs_val_str = m.pfs_val ? `${Math.round(m.pfs_val)} days` : '—';
+  const bTF = state.rows[0].tumor_fraction || 0.001, lTF = state.rows[state.rows.length-1].tumor_fraction, dL = (lTF-bTF)/bTF;
+  
+  const engText = `Patient ${pid}: ${m.age||'—'} years old, ${m.egfr_status||'—'}, ${m.TreatmentGroup||'—'}, ${state.rows.length} visits. Tumor burden ${dL<0?'decreased':'increased'} (${pct(dL)}) from baseline. Progression-free survival: ${pfs_val_str}. CT outcome: ${m.CT||'—'}. Response likelihood: ${pct(m.response_prob)}.`;
+  const thaText = `ผู้ป่วย ${pid} อายุ ${m.age||'—'} ปี มีสถานะ ${m.egfr_status||'—'} ได้รับการรักษาด้วย ${m.TreatmentGroup||'—'} และมีข้อมูลติดตามทั้งหมด ${state.rows.length} ครั้ง ภาระโรคเชิงโมเลกุล${dL<0?'ลดลง':'เพิ่มขึ้น'}จากค่าเริ่มต้น (${pct(dL)}) ระยะเวลาปลอดการลุกลามของโรค (Progression-free survival; PFS) เท่ากับ ${pfs_val_str} ผลประเมินจาก CT คือ ${m.CT||'—'} และค่าความเป็นไปได้ของการตอบสนองจากโมเดลเท่ากับ ${pct(m.response_prob)}`;
+  
+  $('a_header_cards').innerHTML = [{k:'PATIENT ID',v:pid},{k:'AGE',v:m.age||'—'},{k:'Status',v:m.egfr_status||'—'},{k:'TREATMENT',v:m.TreatmentGroup||'—'},{k:'OUTCOME',v:ctBadge(m.CT)},{k:'PFS',v:pfs_val_str},{k:'ML PREDICTION',v:ml_pred},{k:'VISITS',v:state.rows.length}].map(i=>`<div class="kpi-card"><div class="kpi-label">${i.k}</div><div class="kpi-value" style="font-size:18px;">${i.v}</div></div>`).join('');
+  
+  $('a_narrative').innerHTML = `<div style="margin-bottom:4px; font-weight:600;">${engText}</div>
+    <div style="font-family:'Sarabun'; font-size:13px; color:#475569; border-top:1px solid rgba(30,64,175,0.15); padding-top:6px; line-height:1.5;">${thaText}</div>
+    <div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:11px; color:var(--sub); line-height:1.4;">
+      * <b>PR</b> (Partial Response): Significant tumor reduction. / <span style="font-family:'Sarabun';">หมายถึงก้อนมะเร็งลดลงอย่างมีนัยสำคัญ</span><br>
+      * <b>non-PR</b>: Stable or progressive disease state. / <span style="font-family:'Sarabun';">หมายถึงภาวะโรคคงที่หรือมีแนวโน้มลุกลาม</span>
+    </div>`;
+
+  $('tfTableBody').innerHTML = state.rows.map((r, i) => { const d = (r.tumor_fraction-bTF)/bTF; return `<tr><td>Visit T${r.timepoint}</td><td class="font-mono">${r.sample_id}</td><td><span style="font-weight:700; margin-right:10px;">${num(r.tumor_fraction,4)}</span><div class="mag-bar-bg"><div class="mag-bar-fill" style="width:${Math.min(r.tumor_fraction*100,100)}%"></div></div></td><td style="color:${d>0.1?'var(--red)':d<-0.1?'var(--green)':'var(--muted)'}">${i===0?'Baseline':pct(d)}</td><td class="font-mono">${num(r.ploidy, 2)}</td><td>${badge(i===0?'Base':d<-0.2?'Reduced':d>0.2?'Escalating':'Stable', i===0?'sd':d<-0.2?'pr':d>0.2?'pd':'sd')}</td></tr>`; }).join('');
+  $('cnvTableBody').innerHTML = state.rows.map(r => {
+    const pdfAction = (canDownloadPDF() && r.has_pdf) ? `<a href="/api/report/cnv/${r.sample_id}" target="_blank" class="btn" style="padding:4px 8px; font-size:10px;">View PDF</a>` : '—';
+    return `<tr><td class="font-mono">${r.sample_id}</td><td>T${r.timepoint}</td><td>${pdfAction}</td><td>${r.has_pdf?badge('Available','pr'):badge('Missing','sd')}</td></tr>`;
+  }).join('');
+  $('visitSelector').innerHTML = state.rows.map((r,i)=>`<div class="visit-pill ${i===state.vIdx?'active':''}" onclick="selectVisit(${i})">T${r.timepoint} | ${r.sample_id}</div>`).join('');
+  $('fragLegend').innerHTML = `<div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div>Short-fragment fraction (<150 bp)</div><div class="legend-item"><div class="legend-dot" style="background:var(--blue);"></div>Short/long fragment ratio</div>`;
+  renderMLAssessment(m);
+  selectVisit(state.rows.length - 1); drawCharts();
+}
+
+async function selectVisit(idx) {
+  state.vIdx = idx; document.querySelectorAll('.visit-pill').forEach((p,i)=>p.classList.toggle('active',i===idx));
+  const v = state.rows[idx]; $('v_title').textContent = `Visit T${v.timepoint} Details (${v.sample_id})`;
+  const base = state.rows[0].tumor_fraction || 0.001, d = (v.tumor_fraction-base)/base;
+  const items = [{k:'SAMPLE ID',v:v.sample_id},{k:'TUMOR FRACTION',v:num(v.tumor_fraction,4)},{k:'% Δ BASELINE',v:pct(d)},{k:'CP SCORE',v:num(v.cp_score,3)},{k:'PLOIDY',v:num(v.ploidy,2)},{k:'GC MAD',v:num(v.gc_mad,3)},{k:'SHORT FRACTION',v:pct(v.short_fraction_s150)},{k:'S/L RATIO',v:num(v.short_to_long_ratio,3)}];
+  $('v_details_grid').innerHTML = items.map(i=>`<div><div class="kpi-label">${i.k}</div><div class="font-mono" style="font-weight:700; font-size:14px; margin-top:4px;">${i.v}</div></div>`).join('');
+  
+  const emRes = await api(`/api/features/${v.patient_key}/endmotif`); 
+  drawEndMotifs(emRes ? emRes.data : [], emRes ? emRes.fallback : false);
+  
+  const fragRes = await api(`/api/features/${v.patient_key}/fraglen`); 
+  drawFragHist(fragRes ? fragRes.data : [], fragRes ? fragRes.fallback : false);
+
+  $('ichorStats').innerHTML = `<div class="kpi-card" style="padding:15px; border-style:dashed;"><div class="kpi-label">Ploidy (T${v.timepoint})</div><div class="kpi-value" style="font-size:20px;">${num(v.ploidy, 2)}</div></div><div class="kpi-card" style="padding:15px; border-style:dashed;"><div class="kpi-label">GC MAD (T${v.timepoint})</div><div class="kpi-value" style="font-size:20px;">${num(v.gc_mad, 3)}</div></div>`;
+}
+
+function drawCharts() {
+  const r = state.rows;
+  const drawLine = (id, keys, colors, unit) => {
+    const el = $(id); if(!el) return; const W=el.offsetWidth, H=el.offsetHeight, px=60, py=40;
+    const allV = keys.flatMap(k => r.map(x=>x[k]||0)); const maxV = Math.max(...allV, unit==='%'?0.05:1) * 1.2;
+    const getY = v => H - py - (v/maxV)*(H-py*2); const getX = i => px + i*((W-px*2)/(r.length-1||1));
+    let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100%;">`;
+    
+    for(let i=0; i<=5; i++){ 
+        const v = (maxV/5)*i; 
+        svg += `<line x1="${px}" y1="${getY(v)}" x2="${W-px}" y2="${getY(v)}" class="chart-grid"/>`;
+        svg += `<text x="${px-10}" y="${getY(v)+4}" class="chart-label" text-anchor="end">${unit==='%'?pct(v):num(v,1)}</text>`; 
+    }
+    
+    keys.forEach((k, ki) => {
+      const pts = r.map((x,i)=>`${getX(i)},${getY(x[k]||0)}`).join(' ');
+      // NO AREA FILL HERE - STRICT LINE ONLY
+      svg += `<polyline points="${pts}" fill="none" stroke="${colors[ki]}" stroke-width="3" stroke-linejoin="round"/>`;
+      r.forEach((x,i)=>{ 
+          const vx = x[k]||0;
+          svg += `<circle cx="${getX(i)}" cy="${getY(vx)}" r="5" fill="${colors[ki]}" stroke="#fff" stroke-width="2"/>`; 
+          if(id==='tfTrendChart') {
+              svg += `<text x="${getX(i)}" y="${getY(vx)-12}" class="chart-label" text-anchor="middle" font-weight="700" fill="${colors[ki]}">${num(vx,4)}</text>`;
+          }
+      });
+    });
+    el.innerHTML = svg + `</svg>`;
+  };
+  drawLine('tfTrendChart',['tumor_fraction'],['var(--blue)'],'%');
+  drawLine('fragTrendChart',['short_fraction_s150','short_to_long_ratio'],['var(--purple)','var(--blue)'],'%');
+}
+
+function renderMLAssessment(m) {
+  const prob = (m.response_prob || 0);
+  const nonProb = 1 - prob;
+  const isPR = prob >= 0.5;
+  const probPct = (prob * 100).toFixed(1);
+  const nonProbPct = (nonProb * 100).toFixed(1);
+
+  const predEl = $('ml_pred_class');
+  predEl.textContent = isPR ? 'PR' : 'non-PR';
+  predEl.style.background = isPR ? 'var(--green)' : 'var(--red)';
+
+  $('ml_p_pr_val').textContent = probPct + '%';
+  $('ml_p_pr_bar').style.width = probPct + '%';
+  $('ml_p_nonpr_val').textContent = nonProbPct + '%';
+  $('ml_p_nonpr_bar').style.width = nonProbPct + '%';
+
+  const eng = `The model-estimated probability of partial response (P(PR)) is ${probPct}%. Since this is ${isPR?'above':'below'} the 50% threshold, the sample is classified as ${isPR?'PR':'non-PR'}.`;
+  const tha = `โมเดลประเมินความน่าจะเป็นของการตอบสนองแบบ Partial Response (P(PR)) เท่ากับ ${probPct}% เมื่อเทียบกับเกณฑ์ตัดสินที่ 50% จึงจัดอยู่ในกลุ่ม ${isPR?'PR':'non-PR'}`;
+  
+  $('ml_interpretation').innerHTML = `<div>${eng}</div><div style="margin-top:8px; font-family:'Sarabun'; font-size:13px; border-top:1px solid rgba(30,64,175,0.1); padding-top:8px;">${tha}</div>`;
+}
+
+function drawEndMotifs(data, isFallback) {
+  const el = $('motifFreqChart'); if(!el) return;
+  const W=el.offsetWidth, H=320, px=80, py=20; 
+  if(!data || data.length===0){ el.innerHTML='<div style="padding:100px 0; text-align:center;">N/A</div>'; return; }
+  const max = Math.max(...data.map(d=>d.value), 0.01); const bh = (H-py*2)/data.length - 6;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100%;">`;
+  if(isFallback) svg += `<text x="${W-10}" y="15" class="chart-label" text-anchor="end" style="fill:var(--orange); font-style:italic; font-size:9px;">* Using latest available motif data</text>`;
+  svg += data.map((d,i)=>`<text x="${px-10}" y="${py+i*(bh+6)+bh/2+4}" class="chart-label" text-anchor="end">${d.motif}</text><rect x="${px}" y="${py+i*(bh+6)}" width="${(d.value/max)*(W-px-60)}" height="${bh}" fill="var(--blue)" rx="2"/><text x="${px+(d.value/max)*(W-px-60)+5}" y="${py+i*(bh+6)+bh/2+4}" class="chart-label">${num(d.value,4)}</text>`).join('');
+  el.innerHTML = svg + `</svg>`;
+}
+
+function drawFragHist(data, isFallback) {
+  const el = $('fragHistChart'); if(!el) return;
+  if(!data || data.length===0 || Math.max(...data.map(d=>d.y)) === 0){ el.innerHTML='<div style="padding:120px 0; text-align:center; color:var(--sub); font-size:13px;">N/A</div>'; return; }
+  const W=el.offsetWidth, H=300, px=80, py=40; 
+  
+  // Binning to 10bp
+  const binSize = 10; const bins = {};
+  data.forEach(d => { const b = Math.floor(d.x/binSize)*binSize; bins[b] = (bins[b]||0) + d.y; });
+  const binned = Object.keys(bins).map(x=>({x:Number(x), y:bins[x]})).sort((a,b)=>a.x-b.x);
+  
+  const yMax = Math.max(...binned.map(d=>d.y), 0.001) * 1.2;
+  const getX = x => px + ((x-50)/(350-50))*(W-px-40); 
+  const getY = v => H - py - (v/yMax)*(H-py-20);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100%;">`;
+  if(isFallback) svg += `<text x="${W-10}" y="15" class="chart-label" text-anchor="end" style="fill:var(--orange); font-style:italic; font-size:9px;">* Using latest available distribution data</text>`;
+  
+  // Y-axis label
+  svg += `<text x="25" y="${(H-py+py)/2}" class="chart-label" text-anchor="middle" font-weight="700" transform="rotate(-90, 25, ${(H-py+py)/2})">Fragment Count</text>`;
+
+  for(let i=0; i<=5; i++){
+    const v = (yMax/5)*i;
+    svg += `<line x1="${px}" y1="${getY(v)}" x2="${W-40}" y2="${getY(v)}" class="chart-grid"/>`;
+    svg += `<text x="${px-10}" y="${getY(v)+4}" class="chart-label" text-anchor="end">${Math.round(v)}</text>`;
+  }
+  
+  for(let x=50; x<=350; x+=25) {
+    const isMajor = x % 50 === 0;
+    svg += `<line x1="${getX(x)}" y1="${H-py}" x2="${getX(x)}" y2="${H-py+(isMajor?6:3)}" class="chart-axis"/>`;
+    if(isMajor) svg += `<text x="${getX(x)}" y="${H-py+18}" class="chart-label" text-anchor="middle">${x}</text>`;
+  }
+
+  const pts = binned.map(d=>`${getX(d.x)},${getY(d.y)}`).join(' ');
+  // Restore area fill
+  svg += `<path d="M ${getX(binned[0].x)} ${H-py} L ${pts} L ${getX(binned[binned.length-1].x)} ${H-py} Z" fill="var(--blue-light)" fill-opacity="0.3"/>`;
+  svg += `<polyline points="${pts}" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linejoin="round"/>`;
+  
+  svg += `<text x="${(W+px)/2}" y="${H-5}" class="chart-label" text-anchor="middle" font-weight="700">Fragment Length (bp)</text>`;
+  el.innerHTML = svg + `</svg>`;
+}
+
+function drawCohortCharts(s) {
+  const tf = $('tfDistChart'); if(tf && s.tf_dist) {
+    const k=Object.keys(s.tf_dist), v=Object.values(s.tf_dist), W=tf.offsetWidth, H=300, max=Math.max(...v,1), px=40, py=40;
+    const barW = (W-px*2)/k.length;
+    tf.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:100%;">` + 
+      k.map((x,i)=>{ 
+        const h = (v[i]/max)*(H-py*2); 
+        return `<rect x="${px+i*barW+4}" y="${H-py-h}" width="${barW-8}" height="${h}" fill="var(--blue)" fill-opacity="0.8" rx="4"/> 
+                <text x="${px+i*barW+barW/2}" y="${H-py-h-8}" class="chart-label" text-anchor="middle" font-weight="800" fill="var(--blue)">${v[i]}</text> 
+                <text x="${px+i*barW+barW/2}" y="${H-py+18}" class="chart-label" text-anchor="middle" font-size="9px">${x.replace('(','').replace(']','')}</text>`; 
+      }).join('') + 
+      `<line x1="${px}" y1="${H-py}" x2="${W-px}" y2="${H-py}" stroke="#475569" stroke-width="2.5"/> 
+       <text x="${W/2}" y="${H-5}" class="chart-label" text-anchor="middle" font-weight="800">Tumor Fraction (ichorCNA Range)</text></svg>`;
+  }
+  const ct = $('ctDistChart'); if(ct && s.ct_dist) {
+    const tot = Object.values(s.ct_dist).reduce((a,b)=>a+b,0); const colors = {PR:'var(--green)',SD:'var(--amber)',PD:'var(--red)'};
+    const desc = { PR: '<b>PR</b>: Significant reduction. / <span style="font-family:Sarabun;">ลดลงอย่างมีนัยสำคัญ</span>', SD: '<b>SD</b>: No significant change. / <span style="font-family:Sarabun;">โรคคงที่</span>', PD: '<b>PD</b>: Escalating tumor signals. / <span style="font-family:Sarabun;">โรคลุกลาม' };
+    ct.innerHTML = `<div class="kpi-label" style="margin-bottom:12px;">Outcome Distribution</div>` + Object.keys(s.ct_dist).map(k=>`
+      <div style="margin-bottom:12px;"><div style="display:flex; align-items:center; gap:12px; margin-bottom:4px;"><div style="width:30px; font-weight:800;">${k}</div><div style="flex:1; height:10px; background:#eee; border-radius:5px; overflow:hidden;"><div style="height:100%; background:${colors[k]||'var(--blue)'}; width:${(s.ct_dist[k]/tot)*100}%"></div></div><div style="width:80px; text-align:right; font-size:11px; font-weight:700;">${s.ct_dist[k]} (${((s.ct_dist[k]/tot)*100).toFixed(0)}%)</div></div><div style="font-size:10px; color:var(--sub); margin-left:42px;">${desc[k]||''}</div></div>`).join('');
+  }
+  const tx = $('txDistChart'); if(tx && s.tx_dist) {
+    const tot = Object.values(s.tx_dist).reduce((a,b)=>a+b,0);
+    tx.innerHTML = `<div class="kpi-label" style="margin-bottom:12px;">Treatment Distribution</div>` + Object.keys(s.tx_dist).map(k=>`
+      <div style="margin-bottom:8px;"><div style="display:flex; align-items:center; gap:12px;"><div style="flex:1; font-size:11px; font-weight:600; color:var(--muted);">${k}</div><div style="width:120px; height:8px; background:#eee; border-radius:4px; overflow:hidden;"><div style="height:100%; background:var(--blue); width:${(s.tx_dist[k]/tot)*100}%"></div></div><div style="width:60px; text-align:right; font-size:11px; font-weight:700;">${s.tx_dist[k]}</div></div></div>`).join('');
+  }
+}
+
+function renderReportsHub() {
+  if (!canExport()) { switchPage('patients'); return; }
+  const d = (state.overview.patients || []).filter(p=>p.sample.startsWith('2LB'));
+  const headerActions = $('reportsPage')?.querySelector('.card-header > div:last-child');
+  if (headerActions) headerActions.style.display = canBulkExport() ? 'flex' : 'none';
+  $('reportHubTable').innerHTML = d.map(p => {
+    const selectCell = canBulkExport() ? `<td><input type="checkbox" class="report-check" data-pid="${p.sample}" onchange="togglePidSelection('${p.sample}', this.checked)"></td>` : '';
+    const pdfCell = canDownloadPDF() ? `<button class="btn" style="padding:4px 10px; font-size:11px;" onclick="showPDFs('${p.sample}')">${p.has_pdf_count} PDFs</button>` : 'Restricted';
+    const exportBtn = canExport() ? `<button class="btn primary" onclick="previewExport('${p.sample}', 'single')">Export Patient Bundle</button>` : '';
+    return `<tr>
+      ${selectCell}
+      <td><b>${p.sample}</b></td><td>${p.TreatmentGroup||'—'}</td><td>${p.n_timepoints}</td>
+      <td>${pdfCell}</td>
+      <td>${p.n_ml_timepoints?badge('Ready','pr'):badge('None','sd')}</td><td>Ready</td>
+      <td style="text-align:right;"><button class="btn" style="margin-right:8px;" onclick="showPatient('${p.sample}')">Analysis</button>${exportBtn}</td>
+    </tr>`;
+  }).join('');
+  updateSelectedCounter();
+}
+
+function toggleAllReports(v) { 
+  document.querySelectorAll('.report-check').forEach(c => { 
+    c.checked = v; 
+    togglePidSelection(c.dataset.pid, v);
+  }); 
+}
+
+function togglePidSelection(pid, checked) {
+  if (checked) selectedPids.add(pid);
+  else selectedPids.delete(pid);
+  updateSelectedCounter();
+}
+
+function updateSelectedCounter() { 
+  const count = selectedPids.size;
+  $('selectionText').textContent = `${count} patients selected`; 
+  $('btnExportSelected').disabled = count === 0;
+}
+
+function exportSelectedAction() {
+  if (!canBulkExport()) return alert('Only admin can export selected patients.');
+  const pids = Array.from(selectedPids);
+  if (!pids.length) return alert('Please select at least one patient.');
+  previewExport(null, 'selected');
+}
+
+function previewExport(pid=null, type='single') {
+  if (!canExport()) return alert('Viewer role cannot export data.');
+  if ((type === 'selected' || type === 'all') && !canBulkExport()) return alert('Only admin can export multiple patients.');
+  const pids = (type === 'single') ? [pid] : (type === 'selected' ? Array.from(selectedPids) : state.overview.patients.filter(p=>p.sample.startsWith('2LB')).map(p=>p.sample));
+  $('exportModalTitle').textContent = type === 'single' ? `Export Patient ${pid}` : (type === 'selected' ? 'Export Selected Patients' : 'Export Full Cohort');
+  let html = `<div style="font-size:14px; color:var(--muted); line-height:1.6;">`;
+  if(type === 'single') {
+     const p = state.overview.patients.find(x=>x.sample===pid);
+     html += `Bundle for <b>${pid}</b> includes:<br>• Longitudinal molecular data (CSV)<br>• Clinical patient profile (JSON)<br>• Manifest file (README.txt)<br>• ${p ? p.has_pdf_count : 0} CNA reports (PDF)`;
+  } else {
+     html += `Master ZIP will bundle <b>${pids.length} individual patient folders</b>:<br><br><div class="export-preview-list">${pids.map(id=>`FOLDER: ${id}/`).join('<br>')}</div>`;
+  }
+  html += `</div>`;
+  $('exportModalBody').innerHTML = html;
+  $('exportConfirmBtn').onclick = () => doDownload(pids, type);
+  $('exportModal').classList.remove('hidden');
+}
+
+async function doDownload(pids, type) {
+  if (!canExport()) return alert('Viewer role cannot export data.');
+  if ((type === 'selected' || type === 'all') && !canBulkExport()) return alert('Only admin can export multiple patients.');
+  $('exportModal').classList.add('hidden');
+  const url = type === 'single' ? `/api/export/patient/${encodeURIComponent(pids[0])}` : (type === 'selected' ? '/api/export/selected' : '/api/export/all');
+  const filename = type === 'single' ? `${pids[0]}_bundle.zip` : (type === 'selected' ? 'selected_patient_bundles.zip' : 'all_cohort_patient_bundles.zip');
+  try {
+    let res;
+    if (type === 'selected') {
+      res = await fetch(url, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pids }) });
+    } else if (type === 'all') {
+      res = await fetch(url, { method: 'POST', credentials: 'include' });
+    } else {
+      res = await fetch(url, { method: 'GET', credentials: 'include' });
+    }
+    if (!res.ok) {
+      let detail = '';
+      try { const err = await res.json(); detail = err?.detail ? `: ${err.detail}` : ''; } catch (_) {}
+      throw new Error('Export failed with status ' + res.status + detail);
+    }
+    const blob = await res.blob();
+    if (!blob || blob.size === 0) throw new Error('empty ZIP');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    const objectUrl = a.href;
+    a.remove();
+    URL.revokeObjectURL(objectUrl);
+  } catch (e) {
+    alert('Download failed: ' + e.message);
+  }
+}
+
+async function showPDFs(pid) {
+  if (!canDownloadPDF()) return alert('Viewer role cannot download PDF reports.');
+  const rows = await api(`/api/patient/${pid}`);
+  if (!rows || rows.__error) return alert(rows?.detail || 'Cannot load PDF list');
+  $('pdfListTable').innerHTML = rows.map(r => `<tr><td>T${r.timepoint}</td><td class="font-mono">${r.sample_id}</td><td>${r.has_pdf?`<button onclick="window.open('/api/report/cnv/${encodeURIComponent(r.sample_id)}', '_blank')" class="btn primary" style="padding:4px 8px; font-size:11px;">View PDF</button>`:'<span style="color:var(--red); font-weight:700;">—</span>'}</td></tr>`).join('');
+  $('pdfModal').classList.remove('hidden');
+}
+
+
+function showAdminNotice(msg, ok=true) {
+  const el = $('adminNotice');
+  if (!el) return;
+  el.className = `notice ${ok ? 'ok' : 'err'}`;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  setTimeout(()=>el.classList.add('hidden'), 3500);
+}
+
+function fmtDate(v) {
+  if (!v) return '—';
+  try { const d = new Date(v); return isNaN(d.getTime()) ? v : d.toLocaleString('th-TH', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); }
+  catch(e) { return v; }
+}
+
+async function loadUsers() {
+  if (!canAdmin()) return;
+  const [usersRes, auditRes] = await Promise.all([api('/api/admin/users'), api('/api/admin/audit')]);
+  state.users = usersRes?.users || [];
+  const tbody = $('adminUsersTable');
+  if (tbody) {
+    tbody.innerHTML = state.users.map(u => `
+      <tr>
+        <td><b>${u.username}</b><div style="font-size:11px;color:var(--muted);">created: ${fmtDate(u.created_at)}</div></td>
+        <td>${u.display || '—'}</td>
+        <td><span class="role-badge ${u.role}" style="padding:4px 9px;">${u.role}</span></td>
+        <td>${u.is_active ? badge('Active','pr') : badge('Disabled','pd')}</td>
+        <td style="font-size:12px;color:var(--sub);">${fmtDate(u.last_login)}</td>
+        <td style="text-align:right; white-space:nowrap;">
+          <button class="btn" onclick="editUser('${u.username}')">Edit</button>
+          <button class="btn" onclick="toggleUserActive('${u.username}', ${!u.is_active})">${u.is_active ? 'Disable' : 'Enable'}</button>
+          <button class="btn danger" onclick="deleteUser('${u.username}')">Delete</button>
+        </td>
+      </tr>`).join('');
+  }
+  renderAudit(auditRes?.events || []);
+}
+
+function renderAudit(events) {
+  const tbody = $('auditTable');
+  if (!tbody) return;
+  tbody.innerHTML = (events || []).slice(0, 12).map(e => `
+    <tr><td>${fmtDate(e.timestamp)}</td><td><b>${e.actor || '—'}</b></td><td>${e.action || '—'}</td><td>${e.target || '—'}</td></tr>`).join('') || `<tr><td colspan="4" style="color:var(--muted);">No activity yet.</td></tr>`;
+}
+
+function editUser(username) {
+  const u = state.users.find(x => x.username === username);
+  if (!u) return;
+  $('editUsername').value = u.username;
+  $('editDisplay').value = u.display || '';
+  $('editRole').value = u.role || 'viewer';
+  $('editStatus').value = u.is_active ? 'active' : 'disabled';
+  $('editPassword').value = '';
+}
+
+function clearUserForm() {
+  ['editUsername','editDisplay','editPassword'].forEach(id => { if ($(id)) $(id).value = ''; });
+  if ($('editRole')) $('editRole').value = 'viewer';
+  if ($('editStatus')) $('editStatus').value = 'active';
+}
+
+function clearCreateForm() {
+  ['newUsername','newDisplay','newPassword'].forEach(id => { if ($(id)) $(id).value = ''; });
+  if ($('newRole')) $('newRole').value = 'viewer';
+  if ($('newStatus')) $('newStatus').value = 'active';
+}
+
+async function createUser() {
+  if (!canAdmin()) return alert('Only admin can create users.');
+  const payload = { username: $('newUsername').value.trim(), display: $('newDisplay').value.trim(), role: $('newRole').value, password: $('newPassword').value, is_active: $('newStatus').value === 'active' };
+  if (!payload.username || !payload.password) return showAdminNotice('กรุณากรอก username และ password', false);
+  const res = await api('/api/admin/users', { method:'POST', body: JSON.stringify(payload) });
+  if (!res || res.__error) return showAdminNotice(res?.detail || 'สร้างผู้ใช้ไม่สำเร็จ', false);
+  showAdminNotice('สร้างผู้ใช้ใหม่แล้ว', true);
+  clearCreateForm(); await loadUsers();
+}
+
+async function saveUserEdit() {
+  if (!canAdmin()) return alert('Only admin can edit users.');
+  const username = $('editUsername')?.value;
+  if (!username) return showAdminNotice('กรุณาเลือก user จากตารางก่อน', false);
+  const payload = { display: $('editDisplay').value, role: $('editRole').value, is_active: $('editStatus').value === 'active' };
+  const password = $('editPassword').value;
+  if (password) payload.password = password;
+  const res = await api(`/api/admin/users/${encodeURIComponent(username)}`, { method:'POST', body: JSON.stringify(payload) });
+  if (!res || res.__error) return showAdminNotice(res?.detail || 'บันทึกไม่สำเร็จ', false);
+  showAdminNotice('บันทึกข้อมูลผู้ใช้แล้ว', true);
+  await loadUsers();
+  if (state.user?.username === username) { state.user = { ...state.user, display: payload.display, role: payload.role }; applyRoleUI(); }
+}
+
+async function toggleUserActive(username, makeActive) {
+  if (!canAdmin()) return alert('Only admin can manage users.');
+  const u = state.users.find(x => x.username === username);
+  if (!u) return;
+  if (!makeActive && username === state.user?.username) return showAdminNotice('ไม่สามารถปิดบัญชีของตัวเองได้', false);
+  const action = makeActive ? 'เปิดใช้งาน' : 'ปิดบัญชี';
+  if (!confirm(`${action}บัญชี ${username}?`)) return;
+  const payload = { display: u.display, role: u.role, is_active: makeActive };
+  const res = await api(`/api/admin/users/${encodeURIComponent(username)}`, { method:'POST', body: JSON.stringify(payload) });
+  if (!res || res.__error) return showAdminNotice(res?.detail || `${action}ไม่สำเร็จ`, false);
+  showAdminNotice(`${action}บัญชีแล้ว`, true); await loadUsers();
+}
+
+async function deleteUser(username) {
+  if (!canAdmin()) return alert('Only admin can delete users.');
+  if (username === state.user?.username) return showAdminNotice('ไม่สามารถลบบัญชีของตัวเองได้', false);
+  if (!confirm(`ลบผู้ใช้ ${username} ออกจากระบบถาวร?`)) return;
+  const res = await api(`/api/admin/users/${encodeURIComponent(username)}`, { method:'DELETE' });
+  if (!res || res.__error) return showAdminNotice(res?.detail || 'ลบผู้ใช้ไม่สำเร็จ', false);
+  showAdminNotice('ลบผู้ใช้ออกจากระบบแล้ว', true); await loadUsers();
+}
+
+
+(async()=>{ await boot(); })();
+</script>
+</body>
+</html>

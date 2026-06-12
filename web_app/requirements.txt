@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pandas
+gcsfs
+pydantic
+python-multipart
+python-dateutil

@@ -1,0 +1,15 @@
+﻿How to Run Locally:
+1. Install dependencies:
+   pip install -r requirements.txt
+2. Run the application:
+   uvicorn backend.main:app --reload
+3. Open browser:
+   http://localhost:8000
+
+Login Credentials (Demo):
+- Username: admin
+- Password: admin1234
+
+Environment Flags:
+- USE_LOCAL_DATA=1 : Reads from backend/data/ (Default for local)
+- USE_LOCAL_DATA=0 : Connects to Google Cloud Storage (Production)

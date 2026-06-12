@@ -1,0 +1,12 @@
+﻿cfDNA Monitor (Final V.8.2)
+
+This project provides a comprehensive monitoring platform for Non-Small Cell Lung Cancer (NSCLC) patients using circulating tumor DNA (cfDNA) analysis. 
+
+Key Features:
+- Longitudinal Tumor Fraction analysis
+- Treatment Response Assessment via Machine Learning
+- Fragmentomics Profiling (Short fraction & S/L ratio)
+- End-Motif Signatures
+- Automated Clinical Reports (PDF integration)
+
+Research Use Only. Not for clinical diagnostic use.

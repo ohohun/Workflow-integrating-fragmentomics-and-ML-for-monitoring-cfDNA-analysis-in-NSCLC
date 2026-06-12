@@ -1,0 +1,12 @@
+﻿cfDNA_Monitor_Final.V.8.2/
+├── backend/
+│   ├── main.py
+│   └── data/           # Local datasets for demo
+├── frontend/
+│   ├── index.html      # Main UI
+│   └── Logo_cfDNA.png  # Branding
+├── Dockerfile          # Container configuration
+├── requirements.txt    # Dependencies
+├── README.md           # Project documentation
+├── ABOUT_PROJECT.txt   # Overview
+└── RUN_INSTRUCTIONS.txt # Usage guide
