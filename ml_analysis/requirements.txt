@@ -1,0 +1,11 @@
+jupyter
+notebook
+numpy
+pandas
+openpyxl
+scipy
+scikit-learn
+matplotlib
+seaborn
+lightgbm
+shap
